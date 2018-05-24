@@ -7,3 +7,4 @@ Adds a dedicated menu item to look at reviews.
 * add bulk actions
 * add Ajax actions
 * better customer display
+* add filter to exclude reviews from comment table
