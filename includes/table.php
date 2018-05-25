@@ -151,7 +151,7 @@ class WooProductReviews_Table extends WP_List_Table {
 	protected function get_bulk_actions() {
 
 		// Make a basic array of the actions we wanna include.
-		return array( 'woo_reviews_table_delete' => __( 'Delete Reviews', 'woo-reviews-admin-menu' ) );
+		return array(); // array( 'woo_reviews_table_delete' => __( 'Delete Reviews', 'woo-reviews-admin-menu' ) );
 	}
 
 	/**
@@ -179,14 +179,41 @@ class WooProductReviews_Table extends WP_List_Table {
 	 */
 	protected function column_customer_name( $item ) {
 
-		// Build my markup.
-		$setup  = '<a title="' . __( 'View profile', 'woo-reviews-admin-menu' ) . '" href="' . get_edit_user_link( $item['customer_id'] ) . '">' . esc_html( $item['customer_name'] ) . '</a>';
+		// Set an empty.
+		$setup  = '';
 
-		// Create my formatted name.
-		$setup  = apply_filters( 'woo_reviews_admin_sidebar_column_customer_name', $setup, $item );
+		// Open with the strong tag and the image.
+		$setup .= '<strong>';
+		$setup .= get_avatar( $item['customer_email'], 32 );
+
+		// Build the link setup if the user can edit.
+		if ( current_user_can( 'edit_users' ) ) {
+
+			// Fetch my edit link.
+			$edit   = get_edit_user_link( $item['customer_id'] );
+
+			// And handle the markup.
+			$setup .= '<a title="' . __( 'View profile', 'woo-reviews-admin-menu' ) . '" href="' . esc_url( $edit ) . '">';
+			$setup .= esc_html( $item['customer_name'] );
+			$setup .= '</a>';
+
+		} else {
+
+			// Just show the name if the user can't edit others.
+			$setup .= esc_html( $item['customer_name'] );
+		}
+
+		// Close my strong tag for the name.
+		$setup .= '</strong>';
+
+		// Now display the email.
+		$setup .= sprintf( '<br><a href="%1$s">%2$s</a><br>', esc_url( 'mailto:' . $item['customer_email'] ), esc_html( $item['customer_email'] ) );
+
+		// Run our formatted name through the filter.
+		$build  = apply_filters( 'woo_reviews_admin_sidebar_column_customer_name', $setup, $item );
 
 		// Return, along with our row actions.
-		return $setup . $this->row_actions( $this->setup_row_action_items( $item ) );
+		return $build . $this->row_actions( $this->setup_row_action_items( $item ) );
 	}
 
 	/**
@@ -311,20 +338,26 @@ class WooProductReviews_Table extends WP_List_Table {
 		foreach ( $reviews as $review ) {
 
 			// Fetch our userdata.
-			$user   = get_user_by( 'email', $review->comment_author_email );
+			$userdata   = get_user_by( 'email', $review->comment_author_email );
+
+			// Now the data based on the user existing.
+			$user_id    = ! empty( $userdata->ID ) ? $userdata->ID : 0;
+			$show_name  = ! empty( $userdata->display_name ) ? $userdata->display_name : $review->comment_author;
+			$show_email = ! empty( $userdata->user_email ) ? $userdata->user_email : $review->comment_author_email;
 
 			// Set the array of the data we want.
 			$setup  = array(
-				'id'            => $review->comment_ID,
-				'customer_id'   => $user->ID,
-				'customer_name' => $user->display_name,
-				'product_id'    => $review->comment_post_ID,
-				'review_date'   => $review->comment_date,
-				'review_status' => wp_get_comment_status( $review ),
+				'id'             => $review->comment_ID,
+				'customer_id'    => $user_id,
+				'customer_name'  => $show_name,
+				'customer_email' => $show_email,
+				'product_id'     => $review->comment_post_ID,
+				'review_date'    => $review->comment_date,
+				'review_status'  => wp_get_comment_status( $review ),
 			);
 
 			// Run it through a filter.
-			$data[] = apply_filters( 'woo_reviews_admin_sidebar_table_data_item', $setup, $review, $user );
+			$data[] = apply_filters( 'woo_reviews_admin_sidebar_table_data_item', $setup, $review, $userdata );
 		}
 
 		// Return our data.

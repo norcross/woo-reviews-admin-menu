@@ -25,9 +25,24 @@ function load_admin_table_css() {
 	// Open the style tag.
 	echo '<style>';
 
-		// The icon all the time.
+		// Set the column width.
 		echo 'table.productreviews .column-review_date {';
-			echo 'width: 14%;';
+			echo 'width: 16%;';
+		echo '}';
+
+		echo 'table.productreviews .column-customer_name {';
+			echo 'width: 20%;';
+		echo '}';
+
+		echo 'table.productreviews .column-product_item {';
+			echo 'width: 20%;';
+		echo '}';
+
+		// Float the avatar.
+		echo 'table.productreviews .column-customer_name img {';
+			echo 'float: left;';
+			echo 'margin-right: 10px;';
+			echo 'margin-top: 1px;';
 		echo '}';
 
 	// Close the style tag.
